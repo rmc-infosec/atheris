@@ -95,13 +95,23 @@ otool -L atheris/native.*.so
 
 **Total: 12 wheels** (up from 3)
 
+## CI Build Results
+
+**Successful build:** https://github.com/rmc-infosec/atheris/actions/runs/20839360007
+
+**Wheels produced:**
+- `atheris-3.0.0-cp311-cp311-macosx_11_0_arm64.whl` (7.2 MB)
+- `atheris-3.0.0-cp312-cp312-macosx_11_0_arm64.whl` (7.2 MB)
+- `atheris-3.0.0-cp313-cp313-macosx_11_0_arm64.whl` (7.2 MB)
+- `atheris-3.0.0.tar.gz` (114 KB)
+
 ## Next Steps
 
-1. [ ] Comment on Issue #52 to check maintainer interest
-2. [ ] Fork google/atheris
-3. [ ] Push changes to fork
-4. [ ] Open PR with test results
-5. [ ] Address any CI failures
+1. [x] Fork google/atheris to rmc-infosec
+2. [x] Push changes to fork
+3. [x] Test CI workflow - SUCCESS
+4. [ ] Comment on Issue #52 to check maintainer interest
+5. [ ] Open PR to upstream
 
 ## Known Limitations
 
