@@ -1,8 +1,7 @@
 # Build Linux wheels using Docker (requires building LLVM from source)
 # This is separate from the main wheels.yaml because it takes much longer
 #
-# Publishes Linux wheels to PyPI on tag pushes. The main wheels.yaml publishes
-# macOS wheels + sdist; this workflow adds Linux wheels to the same release.
+# Publishing is handled by release.yaml which waits for all build workflows.
 
 name: Build Linux Wheels
 

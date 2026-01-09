@@ -16,6 +16,8 @@ jobs:
   wait-for-builds:
     name: Wait for build workflows
     runs-on: ubuntu-latest
+    permissions:
+      checks: read  # Required by lewagon/wait-on-check-action
     steps:
       - name: Wait for macOS wheels workflow
         uses: lewagon/wait-on-check-action@v1.3.4
@@ -66,10 +68,11 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Get the most recent successful run of each workflow for this tag
+          # Get the most recent successful run of each workflow for this commit
+          # Note: --commit filters by headSha, works correctly for tag pushes
           MACOS_RUN=$(gh run list --repo ${{ github.repository }} \
             --workflow "Build macOS Wheels" \
-            --branch ${{ github.ref_name }} \
+            --commit ${{ github.sha }} \
             --status success \
             --limit 1 \
             --json databaseId \
@@ -78,7 +81,7 @@ jobs:
 
           LINUX_RUN=$(gh run list --repo ${{ github.repository }} \
             --workflow "Build Linux Wheels" \
-            --branch ${{ github.ref_name }} \
+            --commit ${{ github.sha }} \
             --status success \
             --limit 1 \
             --json databaseId \
