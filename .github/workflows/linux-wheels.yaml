@@ -1,10 +1,17 @@
 # Build Linux wheels using Docker (requires building LLVM from source)
 # This is separate from the main wheels.yaml because it takes much longer
+#
+# Publishes Linux wheels to PyPI on tag pushes. The main wheels.yaml publishes
+# macOS wheels + sdist; this workflow adds Linux wheels to the same release.
 
 name: Build Linux Wheels
 
 on:
-  # Manual trigger only (building LLVM takes ~30-60 minutes)
+  # Build on release tags (same as wheels.yaml)
+  push:
+    tags:
+      - 'v*'
+  # Manual trigger for testing (building LLVM takes ~30-60 minutes)
   workflow_dispatch:
     inputs:
       arch:
@@ -21,7 +28,8 @@ jobs:
   build-x86_64:
     name: Build Linux x86_64 wheels
     runs-on: ubuntu-latest
-    if: inputs.arch == 'x86_64' || inputs.arch == 'both'
+    # Build on tag pushes, or manual trigger with x86_64/both selected
+    if: github.event_name == 'push' || inputs.arch == 'x86_64' || inputs.arch == 'both'
 
     steps:
       - uses: actions/checkout@v4
@@ -48,7 +56,8 @@ jobs:
   build-aarch64:
     name: Build Linux aarch64 wheels
     runs-on: ubuntu-latest
-    if: inputs.arch == 'aarch64' || inputs.arch == 'both'
+    # Build on tag pushes, or manual trigger with aarch64/both selected
+    if: github.event_name == 'push' || inputs.arch == 'aarch64' || inputs.arch == 'both'
 
     steps:
       - uses: actions/checkout@v4
@@ -83,3 +92,28 @@ jobs:
         with:
           name: linux-aarch64-wheels
           path: dist/*.whl
+
+  # Publish Linux wheels to PyPI on tag pushes
+  publish:
+    name: Publish Linux wheels to PyPI
+    needs: [build-x86_64, build-aarch64]
+    runs-on: ubuntu-latest
+    # Only run on tag pushes, not manual triggers
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    environment:
+      name: pypi
+      url: https://pypi.org/p/atheris
+    permissions:
+      id-token: write  # Required for trusted publishing
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        # Uses trusted publishing - no API token needed
+        # Note: macOS wheels + sdist are published by the main wheels.yaml workflow
