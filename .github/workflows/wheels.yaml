@@ -1,0 +1,112 @@
+# Build and publish wheels for multiple platforms
+# This workflow builds wheels for Linux (x86_64, aarch64) and macOS (x86_64, arm64)
+# Addresses: https://github.com/google/atheris/issues/52
+
+name: Build Wheels
+
+on:
+  # Build on release tags
+  push:
+    tags:
+      - 'v*'
+  # Allow manual trigger for testing
+  workflow_dispatch:
+  # Build on PRs that modify build-related files (for testing)
+  pull_request:
+    paths:
+      - 'setup.py'
+      - 'pyproject.toml'
+      - '.github/workflows/wheels.yaml'
+
+jobs:
+  build_wheels:
+    name: Build wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Linux x86_64
+          - os: ubuntu-latest
+            arch: x86_64
+          # Linux aarch64 (uses QEMU emulation)
+          - os: ubuntu-latest
+            arch: aarch64
+          # macOS Intel
+          - os: macos-13
+            arch: x86_64
+          # macOS Apple Silicon
+          - os: macos-14
+            arch: arm64
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Set up QEMU for aarch64 emulation on Linux
+      - name: Set up QEMU
+        if: matrix.arch == 'aarch64' && runner.os == 'Linux'
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.21
+        env:
+          # Only build for the current architecture
+          CIBW_ARCHS: ${{ matrix.arch }}
+
+          # macOS: Set up Homebrew LLVM environment
+          # Intel Macs use /usr/local, ARM Macs use /opt/homebrew
+          # Must link against Homebrew's libc++ to avoid symbol mismatch with system libc++
+          CIBW_ENVIRONMENT_MACOS: >
+            CLANG_BIN="$(brew --prefix llvm)/bin/clang"
+            CC="$(brew --prefix llvm)/bin/clang"
+            CXX="$(brew --prefix llvm)/bin/clang++"
+            LDFLAGS="-L$(brew --prefix llvm)/lib/c++ -L$(brew --prefix llvm)/lib -Wl,-rpath,$(brew --prefix llvm)/lib/c++"
+            CPPFLAGS="-I$(brew --prefix llvm)/include"
+
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.os }}-${{ matrix.arch }}
+          path: ./wheelhouse/*.whl
+
+  build_sdist:
+    name: Build source distribution
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build sdist
+        run: pipx run build --sdist
+
+      - name: Upload sdist
+        uses: actions/upload-artifact@v4
+        with:
+          name: sdist
+          path: dist/*.tar.gz
+
+  # Only publish on tagged releases
+  publish:
+    name: Publish to PyPI
+    needs: [build_wheels, build_sdist]
+    runs-on: ubuntu-latest
+    # Only run on tag pushes, not PRs or manual triggers
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    environment:
+      name: pypi
+      url: https://pypi.org/p/atheris
+    permissions:
+      id-token: write  # Required for trusted publishing
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        # Uses trusted publishing - no API token needed
+        # Configure at: https://pypi.org/manage/project/atheris/settings/publishing/

@@ -16,3 +16,40 @@ ignore-init-module-imports = true
 # E501 Line too long
 # F401 … imported but unused; consider adding to `__all__` or using a redundant alias
 ignore = ["E501", "F401"]
+
+
+[build-system]
+requires = ["setuptools>=45", "pybind11>=2.5.0"]
+build-backend = "setuptools.build_meta"
+
+
+[tool.cibuildwheel]
+# Build for CPython only, skip PyPy and musllinux
+skip = "pp* *-musllinux*"
+
+# Test that the built wheel can be imported
+test-command = "python -c \"import atheris; print('atheris', atheris.__version__)\""
+
+# Build for Python 3.11, 3.12, 3.13
+build = "cp311-* cp312-* cp313-*"
+
+[tool.cibuildwheel.linux]
+# Build for x86_64 and aarch64
+archs = ["x86_64", "aarch64"]
+
+# Use manylinux2014 for glibc compatibility
+manylinux-x86_64-image = "manylinux2014"
+manylinux-aarch64-image = "manylinux2014"
+
+# Install clang/llvm for libFuzzer
+before-all = "yum install -y clang llvm-devel || apt-get update && apt-get install -y clang llvm-dev"
+
+[tool.cibuildwheel.macos]
+# Build for both Intel and Apple Silicon
+archs = ["x86_64", "arm64"]
+
+# Install LLVM from Homebrew (Apple Clang doesn't include libFuzzer)
+before-all = "brew install llvm"
+
+# Environment variables are set via CIBW_ENVIRONMENT_MACOS in the workflow
+# This is needed because $(brew --prefix) differs between Intel and ARM Macs
