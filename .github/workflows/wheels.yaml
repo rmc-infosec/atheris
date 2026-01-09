@@ -26,25 +26,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Linux x86_64
-          - os: ubuntu-latest
-            arch: x86_64
-          # Linux aarch64 (uses QEMU emulation)
-          - os: ubuntu-latest
-            arch: aarch64
-          # macOS - build both archs on ARM runner (cross-compilation for x86_64)
+          # macOS ARM64 (native on macos-latest which is ARM)
           - os: macos-latest
-            arch: "x86_64 arm64"
+            arch: arm64
+          # Note: Linux wheels require building LLVM from source (see deployment/Dockerfile)
+          # Note: macOS x86_64 cross-compilation doesn't work well - skip for now
 
     steps:
       - uses: actions/checkout@v4
-
-      # Set up QEMU for aarch64 emulation on Linux
-      - name: Set up QEMU
-        if: matrix.arch == 'aarch64' && runner.os == 'Linux'
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: arm64
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.21

@@ -27,8 +27,8 @@ build-backend = "setuptools.build_meta"
 # Build for CPython only, skip PyPy and musllinux
 skip = "pp* *-musllinux*"
 
-# Test that the built wheel can be imported
-test-command = "python -c \"import atheris; print('atheris', atheris.__version__)\""
+# Test that the built wheel can be imported (atheris doesn't have __version__)
+test-command = "python -c \"import atheris; print('atheris loaded, FuzzedDataProvider:', hasattr(atheris, 'FuzzedDataProvider'))\""
 
 # Build for Python 3.11, 3.12, 3.13
 build = "cp311-* cp312-* cp313-*"
@@ -45,8 +45,8 @@ manylinux-aarch64-image = "manylinux_2_28"
 before-all = "dnf install -y clang compiler-rt"
 
 [tool.cibuildwheel.macos]
-# Build for both Intel and Apple Silicon
-archs = ["x86_64", "arm64"]
+# Build for Apple Silicon only (x86_64 cross-compilation has issues)
+archs = ["arm64"]
 
 # Install LLVM from Homebrew (Apple Clang doesn't include libFuzzer)
 before-all = "brew install llvm"

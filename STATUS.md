@@ -106,9 +106,18 @@ otool -L atheris/native.*.so
 ## Known Limitations
 
 - **macOS requires Homebrew LLVM** - Apple Clang doesn't include libFuzzer
+- **Linux requires building LLVM from source** - The manylinux containers don't have libFuzzer pre-installed. Google uses a custom Docker image that builds LLVM from source (see `deployment/Dockerfile`). This takes too long for cibuildwheel.
+- **macOS x86_64 cross-compilation has issues** - Building x86_64 on ARM runner fails delocate/test steps
 - **No Windows support** - Shell-based build scripts incompatible
 - **ASan/UBSan optional** - Sanitizer libraries may not be bundled on all platforms
 - **Python 3.14+ unsupported** - Atheris only supports 3.6-3.13 currently
+
+## Current PR Scope
+
+Due to the Linux LLVM build complexity, this PR focuses on:
+- **macOS ARM64 wheels only** (native builds on Apple Silicon)
+
+Linux wheels should continue using the existing `deployment/Dockerfile` approach.
 
 ## Notes
 
