@@ -124,10 +124,17 @@ otool -L atheris/native.*.so
 
 ## Current PR Scope
 
-Due to the Linux LLVM build complexity, this PR focuses on:
-- **macOS ARM64 wheels only** (native builds on Apple Silicon)
+This PR adds:
+- **macOS ARM64 wheels** via cibuildwheel (fast, ~5 min)
+- **Linux x86_64 wheels** via Docker (slow, ~30-60 min, builds LLVM)
+- **Linux aarch64 wheels** via Docker + QEMU (very slow, ~2-3 hours, builds LLVM on emulation)
 
-Linux wheels should continue using the existing `deployment/Dockerfile` approach.
+### Workflows
+
+| Workflow | Platforms | Trigger | Speed |
+|----------|-----------|---------|-------|
+| `wheels.yaml` | macOS ARM64 | Push tags, manual | Fast (~5 min) |
+| `linux-wheels.yaml` | Linux x86_64, aarch64 | Manual only | Slow (LLVM build) |
 
 ## Notes
 
