@@ -16,6 +16,8 @@ jobs:
   wait-for-builds:
     name: Wait for build workflows
     runs-on: ubuntu-latest
+    # aarch64 build can take up to 180 min; add buffer for all builds
+    timeout-minutes: 240
     permissions:
       checks: read  # Required by lewagon/wait-on-check-action
     steps:
@@ -109,5 +111,8 @@ jobs:
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          # Skip files already uploaded (allows retrying failed releases)
+          skip-existing: true
         # Uses trusted publishing - no API token needed
         # Configure at: https://pypi.org/manage/project/atheris/settings/publishing/
