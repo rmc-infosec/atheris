@@ -1,4 +1,4 @@
-# Build and publish macOS ARM64 wheels
+# Build macOS ARM64 wheels and source distribution
 # Addresses: https://github.com/google/atheris/issues/52
 #
 # NOTE: This workflow builds macOS ARM64 only. Linux wheels require building
@@ -6,11 +6,13 @@
 #
 # KNOWN LIMITATION: macOS wheels currently require Homebrew LLVM at runtime
 # (brew install llvm) due to libc++ dependency. See TODO for future fix.
+#
+# Publishing is handled by release.yaml which waits for all build workflows.
 
-name: Build Wheels
+name: Build macOS Wheels
 
 on:
-  # Build on release tags
+  # Build on release tags (release.yaml handles publishing)
   push:
     tags:
       - 'v*'
@@ -82,27 +84,4 @@ jobs:
           name: sdist
           path: dist/*.tar.gz
 
-  # Only publish on tagged releases
-  publish:
-    name: Publish to PyPI
-    needs: [build_wheels, build_sdist]
-    runs-on: ubuntu-latest
-    # Only run on tag pushes, not PRs or manual triggers
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-    environment:
-      name: pypi
-      url: https://pypi.org/p/atheris
-    permissions:
-      id-token: write  # Required for trusted publishing
-
-    steps:
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: dist
-          merge-multiple: true
-
-      - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        # Uses trusted publishing - no API token needed
-        # Configure at: https://pypi.org/manage/project/atheris/settings/publishing/
+      # Publishing is handled by release.yaml
