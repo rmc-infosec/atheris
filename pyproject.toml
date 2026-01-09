@@ -19,7 +19,7 @@ ignore = ["E501", "F401"]
 
 
 [build-system]
-requires = ["setuptools>=45", "pybind11>=2.5.0"]
+requires = ["setuptools>=45", "wheel", "pybind11>=2.5.0"]
 build-backend = "setuptools.build_meta"
 
 
@@ -33,16 +33,8 @@ test-command = "python -c \"import atheris; print('atheris loaded, FuzzedDataPro
 # Build for Python 3.11, 3.12, 3.13
 build = "cp311-* cp312-* cp313-*"
 
-[tool.cibuildwheel.linux]
-# Build for x86_64 and aarch64
-archs = ["x86_64", "aarch64"]
-
-# Use manylinux_2_28 which has newer clang with libFuzzer
-manylinux-x86_64-image = "manylinux_2_28"
-manylinux-aarch64-image = "manylinux_2_28"
-
-# Install clang with libFuzzer support (manylinux_2_28 is AlmaLinux 8 based)
-before-all = "dnf install -y clang compiler-rt"
+# Linux builds use Docker (see linux-wheels.yaml) because manylinux
+# containers don't have libFuzzer pre-installed and building LLVM is slow.
 
 [tool.cibuildwheel.macos]
 # Build for Apple Silicon only (x86_64 cross-compilation has issues)

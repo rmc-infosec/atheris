@@ -1,6 +1,11 @@
-# Build and publish wheels for multiple platforms
-# This workflow builds wheels for Linux (x86_64, aarch64) and macOS (x86_64, arm64)
+# Build and publish macOS ARM64 wheels
 # Addresses: https://github.com/google/atheris/issues/52
+#
+# NOTE: This workflow builds macOS ARM64 only. Linux wheels require building
+# LLVM from source - see linux-wheels.yaml for Docker-based Linux builds.
+#
+# KNOWN LIMITATION: macOS wheels currently require Homebrew LLVM at runtime
+# (brew install llvm) due to libc++ dependency. See TODO for future fix.
 
 name: Build Wheels
 
@@ -51,8 +56,9 @@ jobs:
             LDFLAGS="-L$(brew --prefix llvm)/lib/c++ -L$(brew --prefix llvm)/lib -Wl,-rpath,$(brew --prefix llvm)/lib/c++"
             CPPFLAGS="-I$(brew --prefix llvm)/include"
 
-          # macOS: Skip delocate repair - it fails on .a static library files
-          # The libclang_rt.fuzzer_no_main_osx.a is bundled but delocate can't process it
+          # macOS: Skip delocate - it fails on .a static library files
+          # TODO: The wheel currently requires Homebrew LLVM at runtime
+          # Future work: vendor libc++ or use static linking
           CIBW_REPAIR_WHEEL_COMMAND_MACOS: ""
 
       - name: Upload wheels
