@@ -32,12 +32,9 @@ jobs:
           # Linux aarch64 (uses QEMU emulation)
           - os: ubuntu-latest
             arch: aarch64
-          # macOS Intel
-          - os: macos-13
-            arch: x86_64
-          # macOS Apple Silicon
-          - os: macos-14
-            arch: arm64
+          # macOS - build both archs on ARM runner (cross-compilation for x86_64)
+          - os: macos-latest
+            arch: "x86_64 arm64"
 
     steps:
       - uses: actions/checkout@v4
@@ -68,7 +65,7 @@ jobs:
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
-          name: wheels-${{ matrix.os }}-${{ matrix.arch }}
+          name: wheels-${{ matrix.os }}-${{ strategy.job-index }}
           path: ./wheelhouse/*.whl
 
   build_sdist:
